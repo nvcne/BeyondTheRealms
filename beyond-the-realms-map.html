@@ -1,0 +1,588 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beyond the Realms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=Alegreya:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: a wooden kiosk frame. Curtained header with candles; parchment floor plan on the left, realm directory on the right. */
+:root{
+  --walnut:#22170e; --wood:#36261a; --wood-2:#5a3f28; --wood-3:#7a5737;
+  --khaki:#c9b88f; --parchment:#efe3c4; --parch-2:#e3d3ac; --ink:#2b1d12; --ink-soft:#6b5640;
+  --gold:#e0a940; --flame:#ffcf6b; --combat:#9a3a26; --peace:#556335;
+  --f-display:"Cinzel Decorative","Cinzel",Georgia,serif;
+  --f-label:"Cinzel",Georgia,"Times New Roman",serif;
+  --f-body:"Alegreya",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--walnut);color:var(--parchment);font-family:var(--f-body);font-size:16px;overflow:hidden;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.app{height:100%;box-sizing:border-box;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 14px}
+
+/* ---------- header: curtains + candles ---------- */
+header{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;
+  padding:34px 90px 10px;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  background:linear-gradient(var(--wood),var(--walnut));border-bottom:2px solid var(--wood-2)}
+.valance{position:absolute;inset:0 0 auto;height:30px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='30'%3E%3Cpath d='M0 0h64v8c0 13-14 22-32 22S0 21 0 8z' fill='%235b3a22'/%3E%3Cpath d='M0 8c0 13 14 22 32 22s32-9 32-22' fill='none' stroke='%23c9b88f' stroke-width='2'/%3E%3Cpath d='M16 0v18M48 0v18' stroke='%23462c19' stroke-width='3'/%3E%3C/svg%3E") repeat-x;
+  filter:drop-shadow(0 4px 4px rgba(0,0,0,.45))}
+.drape{position:absolute;top:0;bottom:0;width:78px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#4a2e1a 0 9px,#6e472a 9px 15px,#4a2e1a 15px 22px);
+  filter:drop-shadow(0 0 6px rgba(0,0,0,.5))}
+.drape.l{left:0;clip-path:polygon(0 0,100% 0,55% 62%,72% 100%,0 100%)}
+.drape.r{right:0;clip-path:polygon(0 0,100% 0,100% 100%,28% 100%,45% 62%)}
+.drape::after{content:"";position:absolute;top:60%;width:100%;height:6px;background:var(--khaki)}
+.title{text-align:center;min-width:0}
+.title h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.3vw,44px);line-height:1.05;color:var(--khaki);
+  letter-spacing:.02em;text-wrap:balance;text-shadow:0 0 18px rgba(224,169,64,.35),0 2px 0 #000}
+.title p{margin:6px 0 0;font-family:var(--f-label);font-size:clamp(10px,1vw,13px);letter-spacing:.18em;text-transform:uppercase;color:var(--parch-2);opacity:.85}
+.candle{width:34px;height:74px;flex:none}
+.flame{transform-origin:17px 26px;animation:flicker 1.6s infinite ease-in-out}
+.glow{animation:glowp 2.4s infinite ease-in-out}
+@keyframes flicker{0%,100%{transform:scale(1,1) skewX(0)}25%{transform:scale(.92,1.08) skewX(3deg)}50%{transform:scale(1.05,.95) skewX(-2deg)}75%{transform:scale(.97,1.04) skewX(2deg)}}
+@keyframes glowp{0%,100%{opacity:.75}50%{opacity:1}}
+
+/* ---------- main ---------- */
+main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;min-height:0}
+.map-panel{position:relative;min-height:0;border-radius:8px;overflow:hidden;background:var(--parch-2);
+  border:6px solid var(--wood-2);box-shadow:inset 0 0 40px rgba(90,63,40,.45),0 6px 18px rgba(0,0,0,.5)}
+#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#map:active{cursor:grabbing}
+
+/* map drawing */
+.floor{fill:var(--parchment)}
+.grid-line{fill:none;stroke:rgba(107,86,64,.12);stroke-width:.5}
+.wall{fill:none;stroke:var(--walnut);stroke-width:7;stroke-linecap:square;stroke-linejoin:miter}
+.inner-wall{fill:none;stroke:var(--walnut);stroke-width:6;stroke-linecap:square}
+.door{fill:none;stroke:var(--wood-3);stroke-width:1.5}
+.door-leaf{stroke:var(--wood-2);stroke-width:3}
+.shelf{fill:var(--wood-3);stroke:var(--wood-2);stroke-width:1.5}
+.counter{fill:#bba57a;stroke:var(--wood-2);stroke-width:1.2}
+.chair{fill:#d7c7a1;stroke:var(--wood-3);stroke-width:1}
+.room{fill:rgba(122,87,55,.1)}
+.off{fill:url(#hatch);stroke:none;pointer-events:none}
+.off-label{font-family:var(--f-label);font-weight:700;font-size:8px;letter-spacing:.12em;fill:var(--ink-soft);text-anchor:middle;
+  paint-order:stroke;stroke:var(--parchment);stroke-width:3px;stroke-linejoin:round}
+.gtable{fill:#a9875c;stroke:var(--wood-2);stroke-width:1.6}
+.gtable.is-hot{fill:#c39a5f;stroke:var(--gold);stroke-width:3}
+.treat{fill:#c98f4a;stroke:var(--wood-2);stroke-width:1.5}
+.info{fill:var(--gold);stroke:var(--wood-2);stroke-width:1.5}
+.seal circle{fill:var(--wood);stroke:var(--khaki);stroke-width:1}
+.seal text{fill:var(--khaki);font-family:var(--f-label);font-weight:700;font-size:9px;text-anchor:middle}
+.place-label{font-family:var(--f-label);font-weight:700;font-size:8.5px;letter-spacing:.08em;fill:var(--ink);text-anchor:middle;
+  paint-order:stroke;stroke:var(--parchment);stroke-width:2.6px;stroke-linejoin:round}
+.place-label.on-wood{fill:var(--parchment);stroke:none}
+.place-hit{fill:transparent}
+.place.is-active .place-label{fill:var(--combat)}
+.candle-glow{fill:url(#candleGlow)}
+.map-flame{fill:var(--flame);transform-box:fill-box;transform-origin:50% 100%;animation:flicker 1.3s infinite ease-in-out}
+
+.pin{cursor:pointer;transition:opacity .25s}
+.pin .body{transform-box:fill-box;transform-origin:center;transition:transform .25s}
+.pin .ring{fill:var(--c);stroke:var(--parchment);stroke-width:2}
+.pin .emo{font-size:14px;text-anchor:middle;dominant-baseline:central}
+.pin .halo{fill:none;stroke:var(--gold);stroke-width:3;opacity:0}
+.pin.is-active .body{transform:scale(1.35)}
+.pin.is-active .halo{opacity:1;animation:halo 1.4s infinite ease-out}
+@keyframes halo{from{r:15;opacity:1}to{r:30;opacity:0}}
+.pin-label{font-family:var(--f-label);font-weight:700;font-size:9.5px;fill:var(--ink);
+  paint-order:stroke;stroke:var(--parchment);stroke-width:3px;stroke-linejoin:round;pointer-events:none;transition:opacity .25s}
+.pin.is-dim,.pin-label.is-dim{opacity:.2}
+.badge circle{fill:var(--combat);stroke:var(--parchment);stroke-width:1.2}
+.badge path{stroke:var(--parchment);stroke-width:1.3;stroke-linecap:round}
+
+.here .dot{fill:var(--combat);stroke:var(--parchment);stroke-width:2.5}
+.here .pulse{fill:none;stroke:var(--combat);stroke-width:2;animation:pulse 1.8s infinite ease-out}
+@keyframes pulse{from{r:8;opacity:.9}to{r:26;opacity:0}}
+.here text{font-family:var(--f-label);font-weight:700;font-size:8px;letter-spacing:.12em;fill:var(--combat);text-anchor:middle;
+  paint-order:stroke;stroke:var(--parchment);stroke-width:3px}
+
+.route-glow{fill:none;stroke:rgba(224,169,64,.35);stroke-width:12;stroke-linecap:round;stroke-linejoin:round}
+.route{fill:none;stroke:var(--gold);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.route-flow{fill:none;stroke:var(--walnut);stroke-width:2;stroke-dasharray:1 9;stroke-linecap:round;animation:flow .8s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-10}}
+.walker{fill:var(--combat);stroke:var(--parchment);stroke-width:2.5}
+
+/* map overlays */
+.legend{position:absolute;top:10px;left:10px;display:grid;gap:5px;padding:8px 10px;border-radius:6px;
+  background:rgba(239,227,196,.94);color:var(--ink);border:1px solid var(--wood-3);font-size:12.5px;pointer-events:none}
+.legend b{font-family:var(--f-label);font-size:10px;letter-spacing:.14em;color:var(--ink-soft)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{flex:none;display:inline-block;width:14px;height:14px;border-radius:50%}
+.lg-realm{background:#4f6f86;border:2px solid var(--parchment);box-shadow:0 0 0 1px var(--wood-3)}
+.lg-combat{background:var(--combat);border:1.5px solid var(--parchment);width:11px!important;height:11px!important}
+.lg-here{background:var(--combat);border:2px solid var(--parchment)}
+.lg-route{height:5px!important;width:18px!important;border-radius:3px!important;background:var(--gold)}
+.controls{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:10px;display:grid;gap:8px}
+.ctl{width:54px;height:54px;border-radius:50%;border:2px solid var(--khaki);background:var(--wood);display:grid;place-items:center;
+  box-shadow:0 3px 8px rgba(0,0,0,.45)}
+.ctl:active{transform:scale(.93);background:var(--wood-2)}
+.ctl svg{width:24px;height:24px;stroke:var(--khaki);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.hint{position:absolute;left:10px;bottom:10px;padding:7px 12px;border-radius:20px;background:rgba(34,23,14,.85);color:var(--parch-2);
+  font-size:13px;pointer-events:none;transition:opacity .6s}
+
+/* ---------- directory panel ---------- */
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0;padding:12px;border-radius:8px;background:var(--wood);border:1px solid var(--wood-2)}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel-head h2{margin:0;font-family:var(--f-label);font-size:17px;letter-spacing:.08em;color:var(--khaki)}
+.panel-head small{color:var(--parch-2);opacity:.75;font-size:13px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border-radius:8px;background:var(--walnut)}
+.tab{min-height:44px;border:0;border-radius:6px;background:transparent;font-family:var(--f-label);font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--parch-2)}
+.tab[aria-pressed="true"]{background:var(--khaki);color:var(--ink)}
+.list,.detail{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:6px;padding-right:2px}
+.group-h{margin:8px 2px 0;font-family:var(--f-label);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--khaki)}
+.group-h:first-child{margin-top:0}
+.card{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:60px;padding:6px 10px 6px 8px;
+  border:2px solid transparent;border-radius:6px;background:var(--parchment);color:var(--ink);text-align:left}
+.card:active{background:var(--parch-2)}
+.card.is-active{border-color:var(--gold);background:#f8edd2}
+.card b{display:block;font-family:var(--f-label);font-size:15px}
+.card small{display:block;color:var(--ink-soft);font-size:13.5px}
+.crest{width:40px;height:44px;display:grid;place-items:center;font-size:21px;background:var(--c,var(--wood-3));
+  clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%);padding-bottom:6px;box-sizing:border-box}
+.crest.lg{width:66px;height:74px;font-size:36px;padding-bottom:10px}
+.tag{font-family:var(--f-label);font-size:10px;font-weight:700;letter-spacing:.06em;padding:4px 7px;border-radius:4px;white-space:nowrap}
+.tag.combat{background:var(--combat);color:var(--parchment)}
+.tag.peace{background:var(--peace);color:var(--parchment)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{min-height:52px;border-radius:6px;border:2px solid var(--khaki);background:transparent;font-family:var(--f-label);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--khaki)}
+.btn.primary{background:var(--khaki);color:var(--ink)}
+.btn:active{transform:scale(.97)}
+
+.detail{gap:12px}
+.back{align-self:flex-start;min-height:44px;padding:0 14px 0 8px;border-radius:22px;border:1px solid var(--wood-3);background:var(--walnut);
+  font-family:var(--f-label);font-size:12px;font-weight:700;color:var(--khaki)}
+.d-hero{display:flex;align-items:center;gap:14px}
+.eyebrow{margin:0;font-family:var(--f-label);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--khaki)}
+.d-hero h3{margin:2px 0 0;font-family:var(--f-display);font-size:28px;line-height:1.1;color:var(--parchment)}
+.lore{margin:0;font-style:italic;font-size:17px;line-height:1.4;color:var(--parch-2)}
+.facts{margin:0;display:grid;gap:1px;border-radius:6px;overflow:hidden;background:var(--wood-2)}
+.facts div{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center;padding:9px 12px;background:var(--parchment);color:var(--ink)}
+.facts dt{font-family:var(--f-label);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.facts dd{margin:0;font-size:15.5px;line-height:1.3}
+.chip{min-height:38px;padding:0 12px;border-radius:19px;border:1.5px solid var(--wood-3);background:var(--parch-2);color:var(--ink);font-family:var(--f-label);font-weight:700;font-size:13px}
+.quest{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;padding:10px;border-radius:6px;text-align:left;
+  border:2px dashed var(--gold);background:rgba(224,169,64,.12);color:var(--parchment)}
+.quest b{display:block;font-family:var(--f-label);font-size:14px;color:var(--gold)}
+.quest small{display:block;font-size:14px;line-height:1.3;color:var(--parch-2)}
+.stick{display:inline-block;width:7px;height:30px;margin:0 1px;border-radius:4px;background:#e6c98f;border:1px solid #9a7a4c;transform:rotate(-8deg)}
+.tour-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.tour-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--walnut);color:var(--parch-2);transition:background .3s}
+.tour-list li.now{background:var(--khaki);color:var(--ink)}
+.tour-list li.done{opacity:.6}
+.tour-list .n{font-family:var(--f-label);font-weight:700;width:22px;text-align:center}
+
+/* ---------- idle attract screen ---------- */
+.attract{position:fixed;inset:0;z-index:50;display:grid;place-items:center;align-content:center;gap:22px;text-align:center;
+  background:radial-gradient(circle at 50% 45%,rgba(90,63,40,.92),rgba(34,23,14,.97) 70%);backdrop-filter:blur(3px)}
+.ring{position:relative;width:min(56vmin,340px);aspect-ratio:1;max-width:100%;animation:spin 60s linear infinite}
+.ring span{position:absolute;left:50%;top:50%;width:54px;height:60px;margin:-30px 0 0 -27px;
+  transform:rotate(var(--a)) translateY(calc(-1 * min(24vmin,145px))) rotate(calc(-1 * var(--a)))}
+.ring span .crest{width:54px;height:60px;font-size:28px;animation:spin 60s linear infinite reverse}
+.ring .center{position:absolute;inset:0;display:grid;place-items:center;animation:spin 60s linear infinite reverse}
+.ring .center svg{width:44%;height:44%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ring span{animation:none}
+.attract h2{margin:0;font-family:var(--f-display);font-size:clamp(30px,5vw,58px);color:var(--khaki);text-shadow:0 0 24px rgba(224,169,64,.4)}
+.attract p{margin:0;font-family:var(--f-label);font-size:clamp(14px,1.8vw,20px);letter-spacing:.2em;text-transform:uppercase;color:var(--parchment);animation:glowp 2s infinite}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  .app{height:auto}
+  header{padding-inline:60px}
+  .drape{width:50px}
+  .candle{display:none}
+  main{grid-template-columns:minmax(0,1fr)}
+  .map-panel{height:72vh}
+  .panel{min-height:70vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+
+<div class="app">
+  <header>
+    <div class="valance"></div>
+    <div class="drape l"></div><div class="drape r"></div>
+    <svg class="candle" viewBox="0 0 34 74" aria-hidden="true">
+      <defs><radialGradient id="hg1"><stop offset="0" stop-color="#ffd27a" stop-opacity=".8"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient></defs>
+      <circle class="glow" cx="17" cy="18" r="17" fill="url(#hg1)"/>
+      <path class="flame" d="M17 6c4 6 6 10 6 14a6 6 0 0 1-12 0c0-4 2-8 6-14z" fill="#ffcf6b"/>
+      <path d="M17 14c2 3 3 5 3 7a3 3 0 0 1-6 0c0-2 1-4 3-7z" fill="#fff3cf"/>
+      <rect x="9" y="30" width="16" height="38" rx="2" fill="#efe3c4"/>
+      <path d="M9 32h16v4c-2 0-2 6-4 6s-1-5-3-5-2 3-4 3-1-4-5-4z" fill="#fff8e6"/>
+      <rect x="4" y="66" width="26" height="6" rx="2" fill="#7a5737"/>
+    </svg>
+    <div class="title">
+      <h1>Beyond the Realms</h1>
+      <p>Java Game Exhibit · Library, 2nd Floor · November 25, 2026</p>
+    </div>
+    <svg class="candle" viewBox="0 0 34 74" aria-hidden="true">
+      <circle class="glow" cx="17" cy="18" r="17" fill="url(#hg1)" style="animation-delay:-1.1s"/>
+      <path class="flame" style="animation-delay:-.7s" d="M17 6c4 6 6 10 6 14a6 6 0 0 1-12 0c0-4 2-8 6-14z" fill="#ffcf6b"/>
+      <path d="M17 14c2 3 3 5 3 7a3 3 0 0 1-6 0c0-2 1-4 3-7z" fill="#fff3cf"/>
+      <rect x="9" y="30" width="16" height="38" rx="2" fill="#efe3c4"/>
+      <path d="M9 32h16v4c-2 0-2 6-4 6s-1-5-3-5-2 3-4 3-1-4-5-4z" fill="#fff8e6"/>
+      <rect x="4" y="66" width="26" height="6" rx="2" fill="#7a5737"/>
+    </svg>
+  </header>
+
+  <main>
+    <section class="map-panel" aria-label="Floor plan">
+      <svg id="map" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <pattern id="ft" width="11" height="11" patternUnits="userSpaceOnUse"><path class="grid-line" d="M11 0H0V11"/></pattern>
+          <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="rgba(43,29,18,.10)"/><path d="M0 0V9" stroke="rgba(43,29,18,.22)" stroke-width="2.5"/></pattern>
+          <radialGradient id="candleGlow"><stop offset="0" stop-color="#ffcf6b" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf6b" stop-opacity="0"/></radialGradient>
+        </defs>
+        <g id="floorG"></g><g id="routeG"></g><g id="pinsG"></g><g id="hereG"></g>
+      </svg>
+      <div class="legend">
+        <b>LEGEND</b>
+        <span><i class="lg-realm"></i>Realm (tap to find)</span>
+        <span><i class="lg-combat"></i>Has a combat system</span>
+        <span><i class="lg-here"></i>You are here</span>
+        <span><i class="lg-route"></i>Your path</span>
+      </div>
+      <div class="hint" id="hint">Pinch to zoom · drag to move · tap a crest</div>
+      <div class="controls">
+        <button class="ctl" id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="ctl" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+        <button class="ctl" id="fit" aria-label="Show whole room"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="ctl" id="rot" aria-label="Rotate map"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></button>
+        <button class="ctl" id="fs" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg></button>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Realm directory">
+      <div class="panel-head"><h2>Realm Directory</h2><small id="stats"></small></div>
+      <div class="tabs" role="group" aria-label="Filter">
+        <button class="tab" data-f="all" aria-pressed="true">All</button>
+        <button class="tab" data-f="combat" aria-pressed="false">Combat</button>
+        <button class="tab" data-f="peace" aria-pressed="false">No combat</button>
+        <button class="tab" data-f="places" aria-pressed="false">Places</button>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="detail" id="detail" hidden></div>
+      <div class="actions">
+        <button class="btn primary" id="tour">Quest Route</button>
+        <button class="btn" id="surprise">Surprise me</button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="attract" id="attract" hidden>
+  <div class="ring" id="ring"></div>
+  <h2>Beyond the Realms</h2>
+  <p>Tap anywhere to explore</p>
+</div>
+
+<script>
+/* ======================================================================
+   EVENT DATA: edit here when the room layout or groups change.
+   Coordinates follow the hand-drawn floor plan (580 x 770 units, ~11 units = 1 ft).
+   ====================================================================== */
+const REALMS = {
+  1:{name:'Skyreach',        color:'#4f6f86', where:'far end, side-room side (angled table)'},
+  2:{name:'Emberforge',      color:'#a3422a', where:'far end, door side (angled table)'},
+  3:{name:'Abyssal Depths',  color:'#2e5a5c', where:'door side, second table from the entrance'},
+  4:{name:'Wildwood',        color:'#5a6a2c', where:'door side, first table from the entrance'},
+  5:{name:'Enchanted Glade', color:'#7b5a7e', where:'side-room side, upper table'},
+  6:{name:'Fae Hollow',      color:'#b0782e', where:'side-room side, next to the Treat & Prize Corner'},
+};
+// game / team: fill these in to show them on each realm's detail card
+const PETS = [
+  {id:'griffin', name:'Griffin',  emoji:'🦅', combat:true,  table:1, at:[232,338], lab:'b', game:'', team:'', lore:'Half eagle, half lion, all courage. Guardians of the windswept peaks.'},
+  {id:'owl',     name:'Owl',      emoji:'🦉', combat:false, table:1, at:[298,310], lab:'b', game:'', team:'', lore:'Silent watchers of the night who keep the oldest lore, right beside the bookshelves.'},
+  {id:'dragon',  name:'Dragon',   emoji:'🐉', combat:true,  table:2, at:[394,310], lab:'b', game:'', team:'', lore:'Ancient fire-breathers guarding their hoards in the molten halls.'},
+  {id:'phoenix', name:'Phoenix',  emoji:'🐦‍🔥', combat:false, table:2, at:[460,338], lab:'b', game:'', team:'', lore:'The firebird that falls to ash and rises again, brighter each time.'},
+  {id:'kraken',  name:'Kraken',   emoji:'🐙', combat:true,  table:3, at:[490,421], lab:'l', game:'', team:'', lore:'Lord of the deep, whose arms reach up from the cold dark sea.'},
+  {id:'basilisk',name:'Basilisk', emoji:'🐍', combat:false, table:3, at:[490,484], lab:'l', game:'', team:'', lore:'Serpent king of the sunken caverns. Whatever you do, avoid its gaze.'},
+  {id:'boar',    name:'Boar',     emoji:'🐗', combat:true,  table:4, at:[490,548], lab:'l', game:'', team:'', lore:'Tusked and stubborn, the boar always charges first.'},
+  {id:'wolf',    name:'Wolf',     emoji:'🐺', combat:false, table:4, at:[490,610], lab:'l', game:'', team:'', lore:'Pack hunters of the wild forest, loyal only to their own.'},
+  {id:'unicorn', name:'Unicorn',  emoji:'🦄', combat:true,  table:5, at:[197,421], lab:'r', game:'', team:'', lore:'Rare and radiant. Its horn is said to heal any wound.'},
+  {id:'stag',    name:'Stag',     emoji:'🦌', combat:true,  table:5, at:[197,484], lab:'r', game:'', team:'', lore:'The crowned king of the glade, swift and proud.'},
+  {id:'fairy',   name:'Fairy',    emoji:'🧚', combat:true,  table:6, at:[197,600], lab:'r', game:'', team:'', lore:'Tiny tricksters of the hollow who share their sweets with the brave.'},
+];
+const PLACES = [
+  {id:'info',     name:'Info Table & TV',     icon:'📜', label:'INFO · TV · PAMPHLETS', at:[348,737], onWood:false, node:'K',  desc:'Pamphlets, the exhibit presentation on TV, and this navigation guide.'},
+  {id:'treats',   name:'Treat & Prize Corner', icon:'🏆', label:'TREATS & PRIZES', at:[98,666], onWood:true, node:'TD', desc:'Snacks, plus your prize once you have collected all 11 quest sticks.'},
+  {id:'entrance', name:'Entrance',            icon:'🚪', label:'ENTRANCE',     at:[500,735], node:'E',  to:[552,697], desc:'The way in and out of the exhibit.'},
+];
+// library areas visitors may not enter (shaded on the map, never routed through)
+const OFF_LIMITS = [
+  {poly:[[22,30],[558,30],[558,240],[22,240]], label:'BOOKSHELVES · LIBRARY ONLY', at:[400,165]},
+  {poly:[[22,240],[126,240],[126,567],[22,567]], label:'SIDE ROOM', at:[74,400], sub:'OFF LIMITS'},
+];
+const TABLES = [
+  {n:1, poly:rotRect(265,324,135,59,-23), node:'AL', seal:[265,324]},
+  {n:2, poly:rotRect(427,324,135,59, 23), node:'AR', seal:[427,324]},
+  {n:3, poly:rectPts(460,389,60,127),     node:'RT', seal:[490,452]},
+  {n:4, poly:rectPts(460,516,60,125),     node:'RB', seal:[490,579]},
+  {n:5, poly:rectPts(168,389,59,127),     node:'LT', seal:[197,452]},
+  {n:6, poly:rectPts(168,516,59,125),     node:'LB', seal:[197,545]},
+];
+// walking graph along the aisles; K = info table (this kiosk)
+const NODES = {K:[348,712],E:[530,697],B1:[440,700],B3:[250,700],TD:[100,712],C1:[344,580],C2:[344,452],C3:[346,400],
+  LT:[258,452],LB:[258,580],RT:[432,452],RB:[432,580],AL:[275,392],AR:[417,392]};
+const EDGES = [['K','B1'],['K','B3'],['K','C1'],['E','B1'],['B3','TD'],['B1','RB'],['B3','LB'],['C1','C2'],['C1','LB'],['C1','RB'],
+  ['C2','LT'],['C2','RT'],['C2','C3'],['C3','AL'],['C3','AR'],['LT','LB'],['RT','RB'],['AL','LT'],['AR','RT']];
+const HERE = [348,716];
+const UNITS_PER_FT = 11, IDLE_MS = 90000;
+const W0 = 580, H0 = 770;
+
+/* ====================================================================== */
+function rectPts(x,y,w,h){return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]]}
+function rotRect(cx,cy,w,h,deg){const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+  return [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y])=>[cx+x*c-y*s,cy+x*s+y*c])}
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+let rot = +(store.get('btr-rot')||0) % 4;
+function P([x,y]){switch(rot){case 1:return[H0-y,x];case 2:return[W0-x,H0-y];case 3:return[y,W0-x];default:return[x,y]}}
+const dims=()=>rot%2?[H0,W0]:[W0,H0];
+const ptsAttr=pts=>pts.map(p=>P(p).map(v=>v.toFixed(1)).join(',')).join(' ');
+const pathD=pts=>'M'+pts.map(p=>P(p).map(v=>v.toFixed(1)).join(' ')).join(' L');
+const ITEMS=Object.fromEntries([...PETS.map(p=>[p.id,{...p,kind:'pet'}]),...PLACES.map(p=>[p.id,{...p,kind:'place'}])]);
+
+/* ---------- pathfinding ---------- */
+const ADJ={};EDGES.forEach(([a,b])=>{const d=Math.hypot(NODES[a][0]-NODES[b][0],NODES[a][1]-NODES[b][1]);(ADJ[a]=ADJ[a]||[]).push([b,d]);(ADJ[b]=ADJ[b]||[]).push([a,d])});
+function shortest(from,to){const dist={[from]:0},prev={},open=new Set(Object.keys(NODES));
+  while(open.size){let u=null;open.forEach(n=>{if(dist[n]!=null&&(u==null||dist[n]<dist[u]))u=n});if(u==null||u===to)break;open.delete(u);
+    (ADJ[u]||[]).forEach(([v,d])=>{const nd=dist[u]+d;if(dist[v]==null||nd<dist[v]){dist[v]=nd;prev[v]=u}})}
+  const out=[to];while(out[0]!==from)out.unshift(prev[out[0]]);return out}
+function routeTo(item){
+  if(item.id==='info')return null;
+  const node=item.kind==='pet'?TABLES.find(t=>t.n===item.table).node:item.node;
+  const pts=[HERE,...shortest('K',node).map(n=>NODES[n])];
+  if(item.kind==='pet')pts.push(item.at);else if(item.to)pts.push(item.to);
+  return pts}
+const lenOf=pts=>pts.slice(1).reduce((s,p,i)=>s+Math.hypot(p[0]-pts[i][0],p[1]-pts[i][1]),0);
+
+/* ---------- drawing ---------- */
+const svg=$('#map'),floorG=$('#floorG'),routeG=$('#routeG'),pinsG=$('#pinsG'),hereG=$('#hereG');
+let base,view;
+function poly(pts,cls,parent=floorG){return el('polygon',{points:ptsAttr(pts),class:cls},parent)}
+function rect(x,y,w,h,cls,parent){return poly(rectPts(x,y,w,h),cls,parent)}
+function text(pt,str,cls,parent=floorG,dx=0,dy=0,anchor){const [x,y]=P(pt);const t=el('text',{x:x+dx,y:y+dy,class:cls},parent);if(anchor)t.setAttribute('text-anchor',anchor);t.textContent=str;return t}
+
+function render(){
+  const [W,H]=dims();base={x:-12,y:-12,w:W+24,h:H+24};view={...base};applyView();
+  floorG.innerHTML='';pinsG.innerHTML='';hereG.innerHTML='';routeG.innerHTML='';
+  rect(22,30,536,715,'floor');
+  el('rect',{x:0,y:0,width:W,height:H,fill:'url(#ft)','pointer-events':'none'},floorG);
+  rect(22,237,104,330,'room');
+  // fixtures
+  [[192,30,26,107],[272,30,26,107],[352,30,26,107],[443,30,26,107],[533,30,25,107],[28,47,37,153]].forEach(r=>rect(...r,'shelf'));
+  poly([[28,207],[245,207],[245,180],[272,180],[272,237],[28,237]],'counter');
+  rect(352,210,206,27,'counter');
+  [[120,178],[192,178]].forEach(([x,y])=>rect(x,y,22,20,'chair'));
+  rect(28,642,140,41,'treat');
+  [[74,604],[136,600]].forEach(([x,y])=>rect(x,y,20,18,'chair'));
+  rect(281,726,135,15,'info');
+  // walls + door
+  el('path',{d:pathD([[558,668],[558,30],[22,30],[22,745],[558,745],[558,725]]),class:'wall'},floorG);
+  el('path',{d:pathD([[126,272],[126,567],[22,567]]),class:'inner-wall'},floorG);
+  const a=P([511,725]),b=P([558,678]);
+  el('path',{d:`M${a.join(' ')} A47 47 0 0 1 ${b.join(' ')}`,class:'door'},floorG);
+  el('path',{d:pathD([[558,725],[511,725]]),class:'door-leaf'},floorG);
+  // off-limits library areas
+  OFF_LIMITS.forEach(o=>{poly(o.poly,'off');const g=el('g',{'pointer-events':'none'},floorG);
+    text(o.at,o.label,'off-label',g,0,3);if(o.sub)text(o.at,o.sub,'off-label',g,0,15)});
+  // game tables
+  TABLES.forEach(t=>{poly(t.poly,'gtable').dataset.table=t.n;
+    const g=el('g',{class:'seal'},floorG);const [x,y]=P(t.seal);el('circle',{cx:x,cy:y,r:8},g);el('text',{x,y:y+3.2},g).textContent=t.n});
+  // decorative candles
+  [[540,255],[150,255],[42,712],[440,722],[540,375]].forEach((pt,i)=>{const [x,y]=P(pt);const g=el('g',{'pointer-events':'none'},floorG);
+    el('circle',{cx:x,cy:y-6,r:14,class:'candle-glow'},g);el('rect',{x:x-2.5,y:y-4,width:5,height:9,rx:1,fill:'#fff6df',stroke:'#7a5737','stroke-width':.6},g);
+    el('ellipse',{cx:x,cy:y-7.5,rx:2.2,ry:3.6,class:'map-flame',style:`animation-delay:-${i*.37}s`},g)});
+  // place labels (tappable)
+  PLACES.forEach(p=>{const g=el('g',{class:'place','data-id':p.id},floorG);
+    const t=text(p.at,p.label,'place-label'+(p.onWood&&rot%2===0?' on-wood':''),g,0,3);
+    requestAnimationFrame(()=>{try{const bb=t.getBBox();const r=el('rect',{x:bb.x-6,y:bb.y-8,width:bb.width+12,height:bb.height+16,class:'place-hit'});g.insertBefore(r,t)}catch(e){}})});
+  // pins
+  PETS.forEach(p=>{const [x,y]=P(p.at);const g=el('g',{class:'pin','data-id':p.id,transform:`translate(${x} ${y})`,style:`--c:${REALMS[p.table].color}`},pinsG);
+    el('circle',{r:24,fill:'transparent'},g);el('circle',{r:15,class:'halo'},g);
+    const body=el('g',{class:'body'},g);el('circle',{r:13,class:'ring'},body);el('text',{class:'emo',y:1},body).textContent=p.emoji;
+    if(p.combat){const bd=el('g',{class:'badge',transform:'translate(10 -10)'},body);el('circle',{r:6},bd);el('path',{d:'M-3 -3L3 3M3 -3L-3 3M-3.2 1.2L-1.2 3.2M3.2 1.2L1.2 3.2'},bd)}
+    const off={r:[19,4,'start'],l:[-19,4,'end'],b:[0,27,'middle']}[p.lab];
+    const lbl=el('text',{x:x+off[0],y:y+off[1],class:'pin-label','text-anchor':off[2],'data-for':p.id},pinsG);lbl.textContent=p.name});
+  // you are here
+  const [hx,hy]=P(HERE);const hg=el('g',{class:'here'},hereG);
+  el('circle',{cx:hx,cy:hy,r:8,class:'pulse'},hg);el('circle',{cx:hx,cy:hy,r:7,class:'dot'},hg);
+  el('text',{x:hx,y:hy-13},hg).textContent='YOU ARE HERE';
+  applyStates();
+  if(sel)drawRoute(routeTo(ITEMS[sel]),false);
+}
+
+/* ---------- view: pan / pinch / zoom ---------- */
+function applyView(){svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)}
+function clampView(v){const minW=base.w/5,maxW=base.w*1.15;const k=Math.min(Math.max(v.w,minW),maxW)/v.w;
+  v={x:v.x,y:v.y,w:v.w*k,h:v.h*k};
+  v.x=Math.min(Math.max(v.x,base.x-v.w*.5),base.x+base.w-v.w*.5);v.y=Math.min(Math.max(v.y,base.y-v.h*.5),base.y+base.h-v.h*.5);return v}
+let anim=null;
+function animateView(t,ms=650){cancelAnimationFrame(anim);const s={...view},t0=performance.now();t=clampView(t);
+  const step=now=>{const k=Math.min(1,(now-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    view={x:s.x+(t.x-s.x)*e,y:s.y+(t.y-s.y)*e,w:s.w+(t.w-s.w)*e,h:s.h+(t.h-s.h)*e};applyView();if(k<1)anim=requestAnimationFrame(step)};
+  anim=requestAnimationFrame(step)}
+function zoomBy(f){const cx=view.x+view.w/2,cy=view.y+view.h/2,w=view.w/f,h=view.h/f;animateView({x:cx-w/2,y:cy-h/2,w,h},300)}
+function fitPts(pts){const sp=pts.map(P);let x0=Math.min(...sp.map(p=>p[0])),x1=Math.max(...sp.map(p=>p[0])),y0=Math.min(...sp.map(p=>p[1])),y1=Math.max(...sp.map(p=>p[1]));
+  const pad=50;let w=Math.max(x1-x0+pad*2,base.w/2.2),h=w*base.h/base.w;if(y1-y0+pad*2>h){h=y1-y0+pad*2;w=h*base.w/base.h}
+  animateView({x:(x0+x1)/2-w/2,y:(y0+y1)/2-h/2,w,h})}
+
+const pointers=new Map();let g0=null,moved=false,downAt=null;
+function toSvg(p,inv){const q=svg.createSVGPoint();q.x=p.x;q.y=p.y;return q.matrixTransform(inv)}
+function gestureStart(){const pts=[...pointers.values()];if(!pts.length){g0=null;return}
+  const mid={x:pts.reduce((s,p)=>s+p.x,0)/pts.length,y:pts.reduce((s,p)=>s+p.y,0)/pts.length};
+  const inv=svg.getScreenCTM().inverse();g0={view:{...view},inv,mid:toSvg(mid,inv),dist:pts.length>1?Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y):0}}
+svg.addEventListener('pointerdown',e=>{cancelAnimationFrame(anim);stopTour();svg.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){moved=false;downAt={x:e.clientX,y:e.clientY}}gestureStart();hideHint()});
+svg.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId)||!g0)return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  const pts=[...pointers.values()];
+  if(!moved&&(pts.length>1||Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)>9))moved=true;
+  if(!moved)return;
+  const mid={x:pts.reduce((s,p)=>s+p.x,0)/pts.length,y:pts.reduce((s,p)=>s+p.y,0)/pts.length};
+  let k=1;if(pts.length>1&&g0.dist>0)k=g0.dist/Math.max(20,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
+  const minW=base.w/5,maxW=base.w*1.15;k=Math.min(Math.max(g0.view.w*k,minW),maxW)/g0.view.w;
+  const a=toSvg(mid,g0.inv);
+  view=clampView({x:g0.mid.x-(a.x-g0.view.x)*k,y:g0.mid.y-(a.y-g0.view.y)*k,w:g0.view.w*k,h:g0.view.h*k});applyView()});
+function endPointer(e){if(!pointers.has(e.pointerId))return;pointers.delete(e.pointerId);
+  if(!pointers.size&&!moved&&e.type==='pointerup'){const hit=document.elementFromPoint(e.clientX,e.clientY);
+    const t=hit&&hit.closest('.pin,.place');if(t)select(t.dataset.id);}
+  gestureStart()}
+svg.addEventListener('pointerup',endPointer);svg.addEventListener('pointercancel',endPointer);
+svg.addEventListener('wheel',e=>{e.preventDefault();cancelAnimationFrame(anim);const inv=svg.getScreenCTM().inverse();const a=toSvg({x:e.clientX,y:e.clientY},inv);
+  const k=e.deltaY>0?1.12:1/1.12;view=clampView({x:a.x-(a.x-view.x)*k,y:a.y-(a.y-view.y)*k,w:view.w*k,h:view.h*k});applyView()},{passive:false});
+
+/* ---------- route ---------- */
+function drawRoute(pts,reveal=true){routeG.innerHTML='';if(!pts)return;const d=pathD(pts);
+  el('path',{d,class:'route-glow'},routeG);const r=el('path',{d,class:'route'},routeG);el('path',{d,class:'route-flow'},routeG);
+  const end=P(pts[pts.length-1]);el('circle',{cx:end[0],cy:end[1],r:4,fill:'#e0a940'},routeG);
+  if(reveal&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const L=r.getTotalLength();r.style.strokeDasharray=L;r.style.strokeDashoffset=L;
+    r.getBoundingClientRect();r.style.transition='stroke-dashoffset 1.1s ease-out';r.style.strokeDashoffset=0}}
+
+/* ---------- selection + panel ---------- */
+let sel=null,filter='all';
+const list=$('#list'),detail=$('#detail');
+function matches(p){return filter==='all'||(filter==='combat'&&p.combat)||(filter==='peace'&&!p.combat)}
+function applyStates(){
+  $$('.pin').forEach(g=>{const p=ITEMS[g.dataset.id];g.classList.toggle('is-active',sel===p.id);
+    const dim=sel?sel!==p.id&&!(ITEMS[sel].kind==='pet'&&false):!matches(p)||filter==='places';
+    g.classList.toggle('is-dim',sel?sel!==p.id:dim);$(`.pin-label[data-for="${p.id}"]`).classList.toggle('is-dim',sel?sel!==p.id:dim)});
+  $$('.place').forEach(g=>g.classList.toggle('is-active',sel===g.dataset.id));
+  $$('.gtable').forEach(t=>t.classList.toggle('is-hot',!!sel&&ITEMS[sel].table==t.dataset.table));
+  $$('.card').forEach(c=>c.classList.toggle('is-active',c.dataset.id===sel))}
+
+function crest(item,cls='crest'){const c=item.kind==='pet'?REALMS[item.table].color:'#7a5737';return `<span class="${cls}" style="--c:${c}">${item.emoji||item.icon}</span>`}
+function renderList(){let h='';
+  if(filter==='places'){h+=`<p class="group-h">Around the room</p>`;PLACES.forEach(p=>{h+=`<button class="card" data-id="${p.id}">${crest({...p,kind:'place'})}<span><b>${p.name}</b><small>${p.desc}</small></span><span></span></button>`})}
+  else{if(filter==='all')h+=`<button class="quest" data-act="quest"><span class="crest" style="--c:#7a5737">🏆</span><span><b>The Realm Quest</b><small>Play all 11 games and earn a popsicle stick at each one. Bring all 11 sticks to the Treat & Prize Corner for your prize. Tap to see the route.</small></span></button>`;
+  TABLES.forEach(t=>{const pets=PETS.filter(p=>p.table===t.n&&matches(p));if(!pets.length)return;
+    h+=`<p class="group-h">Table ${t.n} · ${REALMS[t.n].name}</p>`;
+    pets.forEach(p=>{h+=`<button class="card" data-id="${p.id}">${crest(ITEMS[p.id])}<span><b>${p.name}</b><small>${REALMS[p.table].name}</small></span>${p.combat?'<span class="tag combat">⚔ Combat</span>':'<span class="tag peace">No combat</span>'}</button>`});
+    if(t.n===6&&filter==='all')h+=`<button class="card" data-id="treats">${crest({...ITEMS.treats})}<span><b>Treat & Prize Corner</b><small>Snacks, and prizes for questers</small></span><span></span></button>`})}
+  list.innerHTML=h;applyStates()}
+
+function showDetail(item,route){
+  const ft=route?Math.round(lenOf(route)/UNITS_PER_FT):0,steps=Math.max(1,Math.round(ft/2.4));
+  const far=route?`About ${steps} steps (${ft} ft) from the info table`:'You are standing right here';
+  let h=`<button class="back" data-act="back">‹ Back to directory</button>`;
+  if(item.kind==='pet'){const R=REALMS[item.table];
+    const partner=PETS.find(p=>p.table===item.table&&p.id!==item.id);
+    const pt=partner?`<button class="chip" data-go="${partner.id}">${partner.emoji} ${partner.name}</button>`:`<button class="chip" data-go="treats">🏆 Treat & Prize Corner</button>`;
+    h+=`<div class="d-hero">${crest(item,'crest lg')}<div><p class="eyebrow">Realm of ${R.name}</p><h3>${item.name}</h3></div></div>
+      <p class="lore">${item.lore}</p>
+      <dl class="facts">
+        ${item.game?`<div><dt>Game</dt><dd>${item.game}</dd></div>`:''}
+        ${item.team?`<div><dt>Group</dt><dd>${item.team}</dd></div>`:''}
+        <div><dt>Where</dt><dd>Table ${item.table}, ${R.where}</dd></div>
+        <div><dt>Combat</dt><dd>${item.combat?'<span class="tag combat">⚔ Yes</span> This game has a combat system':'<span class="tag peace">No</span> An adventure without combat'}</dd></div>
+        <div><dt>Distance</dt><dd>${far}</dd></div>
+        <div><dt>Quest</dt><dd>Play this game to earn <b>1 of 11</b> quest sticks</dd></div>
+        <div><dt>${partner?'Shares table':'Next to'}</dt><dd>${pt}</dd></div>
+      </dl>`}
+  else h+=`<div class="d-hero">${crest(item,'crest lg')}<div><p class="eyebrow">Around the room</p><h3>${item.name}</h3></div></div>
+      <p class="lore">${item.desc}</p><dl class="facts"><div><dt>Distance</dt><dd>${far}</dd></div></dl>`;
+  if(route)h+=`<button class="btn primary" data-act="replay">Show the path again</button>`;
+  detail.innerHTML=h;list.hidden=true;detail.hidden=false;detail.scrollTop=0}
+
+function select(id){stopTour();const item=ITEMS[id];if(!item)return;sel=id;applyStates();
+  const r=routeTo(item);drawRoute(r);showDetail(item,r);fitPts(r||[HERE,item.at])}
+function clearSel(refit=true){sel=null;routeG.innerHTML='';detail.hidden=true;list.hidden=false;applyStates();if(refit)animateView(base)}
+
+list.addEventListener('click',e=>{if(e.target.closest('.quest'))return startTour();const c=e.target.closest('.card');if(c)select(c.dataset.id)});
+detail.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.go)select(b.dataset.go);else if(b.dataset.act==='back'){stopTour();clearSel()}else if(b.dataset.act==='replay'&&sel){const r=routeTo(ITEMS[sel]);drawRoute(r);fitPts(r)}});
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{filter=t.dataset.f;$$('.tab').forEach(x=>x.setAttribute('aria-pressed',x===t));stopTour();clearSel();renderList()}));
+
+/* ---------- grand tour ---------- */
+let tourRaf=null;
+function startTour(){stopTour();clearSel(false);animateView(base);
+  const seq=['K','RB','RT','AR','AL','LT','LB','TD'];let pts=[HERE];
+  const stopLen=[];
+  for(let i=0;i<seq.length-1;i++){shortest(seq[i],seq[i+1]).slice(1).forEach(n=>pts.push(NODES[n]));stopLen.push(lenOf(pts))}
+  drawRoute(pts,false);const path=$('#routeG .route');const L=path.getTotalLength();
+  const walker=el('circle',{r:7,class:'walker'},routeG);
+  const order=[4,3,2,1,5,6];
+  detail.innerHTML=`<button class="back" data-act="back">‹ Back to directory</button>
+    <div class="d-hero"><span class="crest lg" style="--c:#7a5737">🏆</span><div><p class="eyebrow">Collect all 11 sticks</p><h3>The Realm Quest</h3></div></div>
+    <p class="lore">Play every game. Each one gives you a popsicle stick. Bring all 11 to the Treat &amp; Prize Corner to claim your prize.</p>
+    <div aria-hidden="true">${'<span class="stick"></span>'.repeat(11)}</div>
+    <ol class="tour-list">${order.map(n=>`<li data-t="${n}"><span class="n">${n}</span><span><b>${REALMS[n].name}</b><br><small>${PETS.filter(p=>p.table===n).map(p=>p.emoji+' '+p.name).join(' · ')}</small></span></li>`).join('')}
+      <li data-t="prize"><span class="n">🏆</span><span><b>Treat &amp; Prize Corner</b><br><small>Trade 11 sticks for your prize</small></span></li></ol>`;
+  list.hidden=true;detail.hidden=false;
+  // walk at a steady pace and pause at each stop; stops follow `order`, then the prize corner
+  const stops=[...order,'prize'],SPEED=90,DWELL=1.4,t0=performance.now();
+  const step=now=>{let t=(now-t0)/1000,prev=0,len=0,cur=-1,finished=true;
+    for(let i=0;i<stopLen.length;i++){const travel=(stopLen[i]-prev)/SPEED;
+      if(t<travel){len=prev+t*SPEED;finished=false;break}t-=travel;cur=i;len=stopLen[i];
+      if(t<DWELL){finished=false;break}t-=DWELL;prev=stopLen[i]}
+    const q=path.getPointAtLength(Math.min(L,len));walker.setAttribute('cx',q.x);walker.setAttribute('cy',q.y);
+    const near=cur>=0&&len-stopLen[cur]<40?{n:stops[cur]}:null;
+    $$('.tour-list li').forEach((li,i)=>{const on=!!near&&i===cur;if(on&&!li.classList.contains('now'))li.scrollIntoView({block:'nearest',behavior:'smooth'});li.classList.toggle('now',on);li.classList.toggle('done',i<cur||(i===cur&&!near))});
+    const k=finished?1:0;
+    $$('.pin').forEach(g=>{const on=!!near&&ITEMS[g.dataset.id].table===near.n;g.classList.toggle('is-active',on);g.classList.toggle('is-dim',!on)});
+    $$('.pin-label').forEach(t=>t.classList.toggle('is-dim',!(near&&ITEMS[t.dataset.for].table===near.n)));
+    $$('.gtable').forEach(t=>t.classList.toggle('is-hot',!!near&&+t.dataset.table===near.n));
+    if(k<1)tourRaf=requestAnimationFrame(step);else{tourRaf=null;$$('.tour-list li').forEach(li=>{li.classList.remove('now');li.classList.add('done')});const last=$('.tour-list li[data-t="prize"]');last.classList.remove('done');last.classList.add('now');applyStates()}};
+  tourRaf=requestAnimationFrame(step)}
+function stopTour(){if(tourRaf){cancelAnimationFrame(tourRaf);tourRaf=null;routeG.innerHTML='';applyStates()}}
+$('#tour').addEventListener('click',startTour);
+$('#surprise').addEventListener('click',()=>{stopTour();clearSel(false);let i=0;const pool=PETS;
+  const spin=setInterval(()=>{const p=pool[Math.floor(Math.random()*pool.length)];$$('.pin').forEach(g=>{g.classList.toggle('is-active',g.dataset.id===p.id);g.classList.remove('is-dim')});
+    if(++i>9){clearInterval(spin);select(p.id)}},110)});
+
+/* ---------- controls ---------- */
+$('#zin').addEventListener('click',()=>zoomBy(1.4));
+$('#zout').addEventListener('click',()=>zoomBy(1/1.4));
+$('#fit').addEventListener('click',()=>animateView(base));
+$('#rot').addEventListener('click',()=>{stopTour();rot=(rot+1)%4;store.set('btr-rot',rot);render()});
+$('#fs').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch(e){}});
+let hintHidden=false;function hideHint(){if(!hintHidden){hintHidden=true;$('#hint').style.opacity=0}}
+
+/* ---------- kiosk: idle screen, wake lock, no long-press menus ---------- */
+const attract=$('#attract');
+$('#ring').innerHTML=PETS.map((p,i)=>`<span style="--a:${i*360/PETS.length}deg">${crest(ITEMS[p.id])}</span>`).join('')+
+  `<div class="center"><svg viewBox="0 0 34 74"><circle cx="17" cy="18" r="17" fill="url(#hg1)" class="glow"/><path class="flame" d="M17 6c4 6 6 10 6 14a6 6 0 0 1-12 0c0-4 2-8 6-14z" fill="#ffcf6b"/><rect x="9" y="30" width="16" height="38" rx="2" fill="#efe3c4"/><rect x="4" y="66" width="26" height="6" rx="2" fill="#7a5737"/></svg></div>`;
+let idleT;function bump(){clearTimeout(idleT);idleT=setTimeout(()=>{stopTour();clearSel();filter='all';$$('.tab').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f==='all'));renderList();attract.hidden=false},IDLE_MS)}
+attract.addEventListener('pointerup',()=>{attract.hidden=true});
+let wl=null;async function keepAwake(){try{if('wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}catch(e){}}
+document.addEventListener('pointerdown',()=>{bump();keepAwake()},true);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake()});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('resize',()=>applyView());
+
+$('#stats').textContent=`${PETS.length} realms · ${TABLES.length} tables · ${PETS.filter(p=>p.combat).length} with combat`;
+render();renderList();bump();
+</script>
